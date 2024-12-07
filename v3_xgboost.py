@@ -57,11 +57,11 @@ def user_portrait(df:DataFrame):
         .merge(pivot_table, on='uid')
     )
 
-    # def calculate_slope(row):
-    #     y = row[pivot_table.columns].values.astype(int)
-    #     slope, _ = np.polyfit(range(1, len(pivot_table.columns)+1), y, 1)
-    #     return 1 if slope >= 0 else 0
-    # df['user_post_slope'] = df.apply(calculate_slope, axis=1)
+    def calculate_slope(row):
+        y = row[pivot_table.columns].values.astype(int)
+        slope, _ = np.polyfit(range(1, len(pivot_table.columns)+1), y, 1)
+        return 1 if slope >= 0 else 0
+    df['user_post_slope'] = df.apply(calculate_slope, axis=1)
 
     return df
 
@@ -116,7 +116,8 @@ if '__main__' == __name__:
     eval_data = eval_data.merge(user_feature, on='uid', how='left').fillna(-1)
 
     # debug: 中间结果
-    eval_data.head(50).to_csv('tmp.csv', index=False)
+    eval_data.to_csv('tmp_eval.csv', index=False)
+    train_data.to_csv('tmp_train.csv', index=False)
 
     # 删除高维数据
     train_data = train_data.drop(['uid','mid','time','content'],axis=1)
@@ -135,6 +136,7 @@ if '__main__' == __name__:
     model_xgb.fit(X_train,y_train)
     xgb_pred=model_xgb.predict(X_test)
 
-    xgb_pred = np.round(xgb_pred)
+    xgb_pred = np.round(xgb_pred).astype(int)
+    xgb_pred = np.where(xgb_pred < 0, 0, xgb_pred)
     y_test = y_test.to_numpy()
     print('正确率:',score(y_test,xgb_pred))
