@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import csv
 
 def score(np_lfc_r, np_lfc_p):
     numerator = list()
@@ -25,14 +26,14 @@ def score(np_lfc_r, np_lfc_p):
 
 def get_dataset(train_data_path, test_data_path):
     train_col_names = ['uid', 'mid', 'time', 'forward_count', 'comment_count', 'like_count', 'content']
-    data_train = pd.read_csv(train_data_path, sep='\t', header=None, names=train_col_names)
+    data_train = pd.read_csv(train_data_path, sep='\t', header=None, names=train_col_names, quoting=csv.QUOTE_NONE)
     test_col_names = ['uid', 'mid', 'time', 'content']
-    data_test = pd.read_csv(test_data_path, sep='\t', header=None, names=test_col_names)
+    data_test = pd.read_csv(test_data_path, sep='\t', header=None, names=test_col_names, quoting=csv.QUOTE_NONE)
     return data_train, data_test
 
 def get_train_dataset(train_data_path):
     train_col_names = ['uid', 'mid', 'time', 'forward_count', 'comment_count', 'like_count', 'content']
-    data_train = pd.read_csv(train_data_path, sep='\t', names=train_col_names)
+    data_train = pd.read_csv(train_data_path, sep='\t', names=train_col_names, quoting=csv.QUOTE_NONE)
     return data_train
 
 def data_gen():
