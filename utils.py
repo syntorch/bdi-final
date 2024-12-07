@@ -44,3 +44,24 @@ def data_gen():
     raw_train_data = raw_data.merge(raw_eval_data, how='outer', indicator=True).query('_merge != "both"').drop('_merge', axis=1)
     assert len(raw_train_data) + len(raw_eval_data) == len(raw_data)
     raw_train_data.to_csv(train_data_path, index=False, header=False, sep='\t')
+
+
+
+
+
+################################################################################
+import re
+def text_len(text):
+    # URL正则表达式
+    url_pattern = re.compile(
+        r'((https?:\/\/)?([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}(:\d+)?(\/[a-zA-Z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]*)?)'
+    )
+    text_without_urls = url_pattern.sub('', text)
+    non_url_char_count = len(text_without_urls.strip())
+    return non_url_char_count
+
+def extract_tags(text):
+    # 定义匹配 #xxx# 格式标签的正则表达式
+    tag_pattern = re.compile(r'#([\u4e00-\u9fa5a-zA-Z0-9_]+)#')
+    # 提取所有匹配的标签内容
+    return tag_pattern.findall(text)
