@@ -8,7 +8,7 @@ from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 from deepctr_torch.inputs import SparseFeat, DenseFeat, get_feature_names
 from deepctr_torch.models import MMOE
-
+#正确率: 0.03034671575916354
 def time_process(df:DataFrame):
     df['time'] = pd.to_datetime(df['time'])
     # Extract time components
@@ -30,11 +30,16 @@ def time_process(df:DataFrame):
 
 if __name__ == "__main__":
     # from v3_xgboost
-    data_train = pd.read_csv('tmp_train.csv')
+    data_train = pd.read_csv('tmp_train.csv').head(40000)
     data_eval = pd.read_csv('tmp_eval.csv')
 
     data_train = time_process(data_train)
     data_eval = time_process(data_eval)
+
+    train_num = data_train.shape[0]
+
+    data_train = pd.concat([data_train, data_eval], axis=0)   
+    # data_train + data_eval
 
     sparse_features = ["uid", "mid"]
     dense_features = ["is_holiday", "content_length", "url_num", "uid_comment_count", "uid_forward_count",
@@ -54,8 +59,11 @@ if __name__ == "__main__":
     for feat in sparse_features:
         lbe = LabelEncoder()
         data_train[feat] = lbe.fit_transform(data_train[feat])
+        # data_eval[feat] = lbe.fit_transform(data_eval[feat])
+
     mms = MinMaxScaler(feature_range=(0, 1))
     data_train[dense_features] = mms.fit_transform(data_train[dense_features])
+    # data_eval[dense_features] = mms.fit_transform(data_eval[dense_features])
 
     # 2.count #unique features for each sparse field,and record dense feature field name
 
@@ -72,8 +80,8 @@ if __name__ == "__main__":
     # 3.generate input data for model
 
     # split_boundary = int(data.shape[0] * 0.8)
-    # train, test = data[:split_boundary], data[split_boundary:]
-    train, test = data_train, data_eval
+    train, test = data_train[:train_num], data_train[train_num:]
+    # train, test = data_train, data_eval
     train_model_input = {name: train[name] for name in feature_names}
     test_model_input = {name: test[name] for name in feature_names}
 
@@ -86,8 +94,8 @@ if __name__ == "__main__":
 
     model = MMOE(dnn_feature_columns, task_types=['regression', 'regression', 'regression'],
                  l2_reg_embedding=1e-5, task_names=target, device=device)
-    model.compile("adagrad", loss=["mse", "mse", "mse"],
-                  metrics=['mse'], )
+    model.compile("adagrad", loss=["mae", "mae", "mae"],
+                  metrics=None, )
 
     history = model.fit(train_model_input, train[target].values, batch_size=32, epochs=10, verbose=2)
     pred_ans = model.predict(test_model_input, 256)
